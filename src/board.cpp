@@ -2,106 +2,154 @@
 
 #include <iostream>
 
-static Piece makePiece(
-    PieceType type,
-    Color color
-) {
-    return {type, color};
+Board::Board() {
+    initialize();
 }
 
-Board::Board() {
+void Board::initialize() {
 
-    // White back row
-
-    squares[0] = makePiece(PieceType::ROOK, Color::WHITE);
-    squares[1] = makePiece(PieceType::KNIGHT, Color::WHITE);
-    squares[2] = makePiece(PieceType::BISHOP, Color::WHITE);
-    squares[3] = makePiece(PieceType::QUEEN, Color::WHITE);
-    squares[4] = makePiece(PieceType::KING, Color::WHITE);
-    squares[5] = makePiece(PieceType::BISHOP, Color::WHITE);
-    squares[6] = makePiece(PieceType::KNIGHT, Color::WHITE);
-    squares[7] = makePiece(PieceType::ROOK, Color::WHITE);
-
-    // White pawns
-
-    for (int i = 8; i < 16; i++) {
-        squares[i] =
-            makePiece(
-                PieceType::PAWN,
-                Color::WHITE
-            );
+    // Clear board
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            squares[row][col] =
+                Piece::EMPTY;
+        }
     }
+
+    // Black major pieces
+
+    squares[0][0] =
+    squares[0][7] =
+        Piece::BLACK_ROOK;
+
+    squares[0][1] =
+    squares[0][6] =
+        Piece::BLACK_KNIGHT;
+
+    squares[0][2] =
+    squares[0][5] =
+        Piece::BLACK_BISHOP;
+
+    squares[0][3] =
+        Piece::BLACK_QUEEN;
+
+    squares[0][4] =
+        Piece::BLACK_KING;
 
     // Black pawns
 
-    for (int i = 48; i < 56; i++) {
-        squares[i] =
-            makePiece(
-                PieceType::PAWN,
-                Color::BLACK
-            );
+    for (int col = 0; col < 8; col++) {
+        squares[1][col] =
+            Piece::BLACK_PAWN;
     }
 
-    // Black back row
+    // White major pieces
 
-    squares[56] = makePiece(PieceType::ROOK, Color::BLACK);
-    squares[57] = makePiece(PieceType::KNIGHT, Color::BLACK);
-    squares[58] = makePiece(PieceType::BISHOP, Color::BLACK);
-    squares[59] = makePiece(PieceType::QUEEN, Color::BLACK);
-    squares[60] = makePiece(PieceType::KING, Color::BLACK);
-    squares[61] = makePiece(PieceType::BISHOP, Color::BLACK);
-    squares[62] = makePiece(PieceType::KNIGHT, Color::BLACK);
-    squares[63] = makePiece(PieceType::ROOK, Color::BLACK);
+    squares[7][0] =
+    squares[7][7] =
+        Piece::WHITE_ROOK;
+
+    squares[7][1] =
+    squares[7][6] =
+        Piece::WHITE_KNIGHT;
+
+    squares[7][2] =
+    squares[7][5] =
+        Piece::WHITE_BISHOP;
+
+    squares[7][3] =
+        Piece::WHITE_QUEEN;
+
+    squares[7][4] =
+        Piece::WHITE_KING;
+
+    // White pawns
+
+    for (int col = 0; col < 8; col++) {
+        squares[6][col] =
+            Piece::WHITE_PAWN;
+    }
 }
 
-char Board::pieceSymbol(const Piece& p) {
-    if (p.type == PieceType::NONE)
-        return '.';
+Piece Board::get(
+    int row,
+    int col
+) const {
 
-    bool white =
-        p.color ==
-        Color::WHITE;
+    return squares[row][col];
+}
 
-    switch (p.type) {
+void Board::set(
+    int row,
+    int col,
+    Piece piece
+) {
 
-        case PieceType::PAWN:
-            return white ? 'P' : 'p';
-
-        case PieceType::KNIGHT:
-            return white ? 'N' : 'n';
-
-        case PieceType::BISHOP:
-            return white ? 'B' : 'b';
-
-        case PieceType::ROOK:
-            return white ? 'R' : 'r';
-
-        case PieceType::QUEEN:
-            return white ? 'Q' : 'q';
-
-        case PieceType::KING:
-            return white ? 'K' : 'k';
-
-        default:
-            return '.';
-    }
+    squares[row][col] =
+        piece;
 }
 
 void Board::print() const {
 
-    for (int row = 7; row >= 0; row--) {
+    auto symbol =
+        [](Piece piece) {
+
+        switch (piece) {
+
+            case Piece::WHITE_PAWN:
+                return 'P';
+
+            case Piece::WHITE_KNIGHT:
+                return 'N';
+
+            case Piece::WHITE_BISHOP:
+                return 'B';
+
+            case Piece::WHITE_ROOK:
+                return 'R';
+
+            case Piece::WHITE_QUEEN:
+                return 'Q';
+
+            case Piece::WHITE_KING:
+                return 'K';
+
+            case Piece::BLACK_PAWN:
+                return 'p';
+
+            case Piece::BLACK_KNIGHT:
+                return 'n';
+
+            case Piece::BLACK_BISHOP:
+                return 'b';
+
+            case Piece::BLACK_ROOK:
+                return 'r';
+
+            case Piece::BLACK_QUEEN:
+                return 'q';
+
+            case Piece::BLACK_KING:
+                return 'k';
+
+            default:
+                return '.';
+        }
+    };
+
+    for (int row = 0; row < 8; row++) {
 
         for (int col = 0; col < 8; col++) {
 
             std::cout
-                << pieceSymbol(
-                    squares[
-                        row * 8 + col
-                    ]
+                << symbol(
+                    squares[row][col]
                 )
-                << ' ';
+                << " ";
+
         }
 
-        std::cout << '\n';
+        std::cout
+            << "\n";
     }
 }
