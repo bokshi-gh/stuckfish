@@ -1,6 +1,7 @@
 #pragma once
 
 #include "piece.h"
+#include "move.h"
 
 class Board {
 private:
@@ -13,11 +14,9 @@ public:
 
     Piece get(int row, int col) const;
 
-    void set(
-        int row,
-        int col,
-        Piece piece
-    );
+    void set(int row, int col, Piece piece);
+
+    void makeMove(const Move& move);
 
     void print() const;
 };
