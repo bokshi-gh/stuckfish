@@ -1,20 +1,26 @@
 #pragma once
 
-enum class Piece {
+enum class Color {
+    WHITE = 0,
+    BLACK = 1,
+    NONE  = 2
+};
 
-    EMPTY,
+enum class PieceType {
+    NONE = 0,
+    PAWN,
+    KNIGHT,
+    BISHOP,
+    ROOK,
+    QUEEN,
+    KING
+};
 
-    WHITE_PAWN,
-    WHITE_KNIGHT,
-    WHITE_BISHOP,
-    WHITE_ROOK,
-    WHITE_QUEEN,
-    WHITE_KING,
+struct Piece {
+    PieceType type = PieceType::NONE;
+    Color color    = Color::NONE;
 
-    BLACK_PAWN,
-    BLACK_KNIGHT,
-    BLACK_BISHOP,
-    BLACK_ROOK,
-    BLACK_QUEEN,
-    BLACK_KING
+    bool isEmpty() const { 
+        return type == PieceType::NONE; 
+    }
 };
