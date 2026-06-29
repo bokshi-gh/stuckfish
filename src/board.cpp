@@ -1,92 +1,549 @@
 #include "board.h"
 
 #include <iostream>
+#include <cctype>
 
 Board::Board() {
-    initialize();
-}
 
-void Board::initialize() {
-
-    // Clear board
-    for (int row = 0; row < 8; row++) {
-        for (int col = 0; col < 8; col++) {
-            squares[row][col] = Piece::EMPTY;
+    for (int r = 0; r < 8; r++) {
+        for (int c = 0; c < 8; c++) {
+            squares[r][c] = {};
         }
     }
-
-    // Black pieces
-    squares[0][0] = squares[0][7] = Piece::BLACK_ROOK;
-    squares[0][1] = squares[0][6] = Piece::BLACK_KNIGHT;
-    squares[0][2] = squares[0][5] = Piece::BLACK_BISHOP;
-
-    squares[0][3] = Piece::BLACK_QUEEN;
-    squares[0][4] = Piece::BLACK_KING;
-
-    for (int col = 0; col < 8; col++) {
-        squares[1][col] = Piece::BLACK_PAWN;
-    }
-
-    // White pieces
-    squares[7][0] = squares[7][7] = Piece::WHITE_ROOK;
-    squares[7][1] = squares[7][6] = Piece::WHITE_KNIGHT;
-    squares[7][2] = squares[7][5] = Piece::WHITE_BISHOP;
-
-    squares[7][3] = Piece::WHITE_QUEEN;
-    squares[7][4] = Piece::WHITE_KING;
-
-    for (int col = 0; col < 8; col++) {
-        squares[6][col] = Piece::WHITE_PAWN;
-    }
 }
 
-Piece Board::get(int row, int col) const {
+Piece Board::getPiece(
+    int row,
+    int col
+) const {
+
     return squares[row][col];
 }
 
-void Board::set(int row, int col, Piece piece) {
+void Board::setPiece(
+    int row,
+    int col,
+    Piece piece
+) {
+
     squares[row][col] = piece;
 }
 
-void Board::makeMove(const Move& move) {
+bool Board::onBoard(
+    int row,
+    int col
+) const {
 
-    squares[move.toRow][move.toCol] =
-        squares[move.fromRow][move.fromCol];
-
-    squares[move.fromRow][move.fromCol] =
-        Piece::EMPTY;
+    return row >= 0 &&
+           row < 8 &&
+           col >= 0 &&
+           col < 8;
 }
 
-void Board::print() const {
+void Board::printBoard() const {
 
-    auto symbol = [](Piece piece) {
+    for (int r = 0; r < 8; r++) {
 
-        switch (piece) {
+        for (int c = 0; c < 8; c++) {
 
-            case Piece::WHITE_PAWN: return 'P';
-            case Piece::WHITE_KNIGHT: return 'N';
-            case Piece::WHITE_BISHOP: return 'B';
-            case Piece::WHITE_ROOK: return 'R';
-            case Piece::WHITE_QUEEN: return 'Q';
-            case Piece::WHITE_KING: return 'K';
+            Piece p =
+                squares[r][c];
 
-            case Piece::BLACK_PAWN: return 'p';
-            case Piece::BLACK_KNIGHT: return 'n';
-            case Piece::BLACK_BISHOP: return 'b';
-            case Piece::BLACK_ROOK: return 'r';
-            case Piece::BLACK_QUEEN: return 'q';
-            case Piece::BLACK_KING: return 'k';
+            char ch = '.';
 
-            default: return '.';
+            switch (p.type) {
+
+                case PieceType::PAWN:
+                    ch = 'P';
+                    break;
+
+                case PieceType::KNIGHT:
+                    ch = 'N';
+                    break;
+
+                case PieceType::BISHOP:
+                    ch = 'B';
+                    break;
+
+                case PieceType::ROOK:
+                    ch = 'R';
+                    break;
+
+                case PieceType::QUEEN:
+                    ch = 'Q';
+                    break;
+
+                case PieceType::KING:
+                    ch = 'K';
+                    break;
+
+                default:
+                    break;
+            }
+
+            if (p.color ==
+                Color::BLACK) {
+
+                ch =
+                    std::tolower(ch);
+            }
+
+            std::cout
+                << ch
+                << ' ';
         }
+
+        std::cout
+            << '\n';
+    }
+}
+
+void Board::makeMove(
+    const Move& move
+) {
+
+    Piece moving =
+        getPiece(
+            move.fromRow,
+            move.fromCol
+        );
+
+    setPiece(
+        move.toRow,
+        move.toCol,
+        moving
+    );
+
+    setPiece(
+        move.fromRow,
+        move.fromCol,
+        {}
+    );
+
+    if (
+        move.promotion.type
+        !=
+        PieceType::NONE
+    ) {
+
+        setPiece(
+            move.toRow,
+            move.toCol,
+            move.promotion
+        );
+    }
+}
+
+void Board::undoMove(
+    const Move& move,
+    Piece captured
+) {
+
+    Piece moving =
+        getPiece(
+            move.toRow,
+            move.toCol
+        );
+
+    setPiece(
+        move.fromRow,
+        move.fromCol,
+        moving
+    );
+
+    setPiece(
+        move.toRow,
+        move.toCol,
+        captured
+    );
+}
+
+std::pair<int,int>
+Board::kingSquare(
+    Color color
+) const {
+
+    for (
+        int r = 0;
+        r < 8;
+        r++
+    ) {
+
+        for (
+            int c = 0;
+            c < 8;
+            c++
+        ) {
+
+            Piece p =
+                squares[r][c];
+
+            if (
+                p.type ==
+                PieceType::KING
+                &&
+                p.color ==
+                color
+            ) {
+
+                return {
+                    r,
+                    c
+                };
+            }
+        }
+    }
+
+    return {
+        -1,
+        -1
+    };
+}
+
+bool Board::isSquareAttacked(
+    int row,
+    int col,
+    Color attacker
+) const {
+
+    auto slide =
+        [&](
+
+        const int dr[],
+        const int dc[],
+        int count,
+
+        PieceType a,
+        PieceType b
+
+        ) {
+
+        for (
+            int i = 0;
+            i < count;
+            i++
+        ) {
+
+            int r =
+                row +
+                dr[i];
+
+            int c =
+                col +
+                dc[i];
+
+            while (
+                onBoard(
+                    r,
+                    c
+                )
+            ) {
+
+                Piece p =
+                    getPiece(
+                        r,
+                        c
+                    );
+
+                if (
+                    !p.isEmpty()
+                ) {
+
+                    if (
+                        p.color ==
+                        attacker
+                        &&
+                        (
+                        p.type
+                        ==
+                        a
+                        ||
+                        p.type
+                        ==
+                        b
+                        )
+                    ) {
+
+                        return true;
+                    }
+
+                    break;
+                }
+
+                r += dr[i];
+                c += dc[i];
+            }
+        }
+
+        return false;
     };
 
-    for (int row = 0; row < 8; row++) {
+    // PAWN
 
-        for (int col = 0; col < 8; col++) {
-            std::cout << symbol(squares[row][col]) << " ";
+    int pawnRow =
+        attacker ==
+        Color::WHITE
+        ? row + 1
+        : row - 1;
+
+    if (
+        onBoard(
+            pawnRow,
+            col - 1
+        )
+    ) {
+
+        Piece p =
+            getPiece(
+                pawnRow,
+                col - 1
+            );
+
+        if (
+            p.type ==
+            PieceType::PAWN
+            &&
+            p.color ==
+            attacker
+        ) {
+
+            return true;
+        }
+    }
+
+    if (
+        onBoard(
+            pawnRow,
+            col + 1
+        )
+    ) {
+
+        Piece p =
+            getPiece(
+                pawnRow,
+                col + 1
+            );
+
+        if (
+            p.type ==
+            PieceType::PAWN
+            &&
+            p.color ==
+            attacker
+        ) {
+
+            return true;
+        }
+    }
+
+    // KNIGHT
+
+    int knr[8] =
+    {
+        -2,-2,
+        -1,-1,
+         1, 1,
+         2, 2
+    };
+
+    int knc[8] =
+    {
+        -1,1,
+        -2,2,
+        -2,2,
+        -1,1
+    };
+
+    for (
+        int i = 0;
+        i < 8;
+        i++
+    ) {
+
+        int r =
+            row +
+            knr[i];
+
+        int c =
+            col +
+            knc[i];
+
+        if (
+            !onBoard(
+                r,
+                c
+            )
+        ) {
+            continue;
         }
 
-        std::cout << '\n';
+        Piece p =
+            getPiece(
+                r,
+                c
+            );
+
+        if (
+            p.type ==
+            PieceType::KNIGHT
+            &&
+            p.color ==
+            attacker
+        ) {
+
+            return true;
+        }
     }
+
+    // BISHOP / QUEEN
+
+    {
+        int dr[4] =
+        {
+            -1,-1,
+             1, 1
+        };
+
+        int dc[4] =
+        {
+            -1,1,
+            -1,1
+        };
+
+        if (
+            slide(
+                dr,
+                dc,
+                4,
+                PieceType::BISHOP,
+                PieceType::QUEEN
+            )
+        ) {
+
+            return true;
+        }
+    }
+
+    // ROOK / QUEEN
+
+    {
+        int dr[4] =
+        {
+            -1,
+             1,
+             0,
+             0
+        };
+
+        int dc[4] =
+        {
+             0,
+             0,
+            -1,
+             1
+        };
+
+        if (
+            slide(
+                dr,
+                dc,
+                4,
+                PieceType::ROOK,
+                PieceType::QUEEN
+            )
+        ) {
+
+            return true;
+        }
+    }
+
+    // KING
+
+    for (
+        int dr = -1;
+        dr <= 1;
+        dr++
+    ) {
+
+        for (
+            int dc = -1;
+            dc <= 1;
+            dc++
+        ) {
+
+            if (
+                dr == 0
+                &&
+                dc == 0
+            )
+                continue;
+
+            int r =
+                row +
+                dr;
+
+            int c =
+                col +
+                dc;
+
+            if (
+                !onBoard(
+                    r,
+                    c
+                )
+            )
+                continue;
+
+            Piece p =
+                getPiece(
+                    r,
+                    c
+                );
+
+            if (
+                p.type ==
+                PieceType::KING
+                &&
+                p.color ==
+                attacker
+            ) {
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool Board::isKingInCheck(
+    Color color
+) const {
+
+    auto king =
+        kingSquare(
+            color
+        );
+
+    if (
+        king.first
+        ==
+        -1
+    ) {
+
+        return false;
+    }
+
+    Color enemy =
+        color ==
+        Color::WHITE
+        ? Color::BLACK
+        : Color::WHITE;
+
+    return
+        isSquareAttacked(
+            king.first,
+            king.second,
+            enemy
+        );
 }

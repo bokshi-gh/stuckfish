@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include "piece.h"
 #include "move.h"
 
@@ -10,13 +11,23 @@ private:
 public:
     Board();
 
-    void initialize();
+    Piece getPiece(int row, int col) const;
+    void setPiece(int row, int col, Piece piece);
 
-    Piece get(int row, int col) const;
+    bool onBoard(int row, int col) const;
 
-    void set(int row, int col, Piece piece);
+    void printBoard() const;
 
     void makeMove(const Move& move);
+    void undoMove(const Move& move, Piece captured);
 
-    void print() const;
+    std::pair<int,int> kingSquare(Color color) const;
+
+    bool isSquareAttacked(
+        int row,
+        int col,
+        Color attacker
+    ) const;
+
+    bool isKingInCheck(Color color) const;
 };
