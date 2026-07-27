@@ -1,5 +1,5 @@
 """
-Move generation for chess
+Move generation with move ordering
 Author: Rajesh Thapa (bokshi)
 """
 
@@ -79,77 +79,4 @@ def generate_pawn_moves(board, from_sq, color):
 def generate_knight_moves(board, from_sq, color):
     """Generate knight moves"""
     moves = []
-    rank = rank_of(from_sq)
-    file = file_of(from_sq)
-    
-    knight_moves = [(-2,-1),(-2,1),(-1,-2),(-1,2),(1,-2),(1,2),(2,-1),(2,1)]
-    
-    for dr, df in knight_moves:
-        nr, nf = rank + dr, file + df
-        if 0 <= nr < 8 and 0 <= nf < 8:
-            to_sq = nr * 8 + nf
-            piece = board.board[to_sq]
-            if not piece or piece_color(piece) != color:
-                moves.append((from_sq, to_sq, 0))
-    
-    return moves
-
-def generate_sliding_moves(board, from_sq, color, directions):
-    """Generate sliding piece moves"""
-    moves = []
-    rank = rank_of(from_sq)
-    file = file_of(from_sq)
-    occupancy = board.get_occupancy()
-    
-    for dr, df in directions:
-        r, f = rank + dr, file + df
-        while 0 <= r < 8 and 0 <= f < 8:
-            to_sq = r * 8 + f
-            piece = board.board[to_sq]
-            if piece:
-                if piece_color(piece) != color:
-                    moves.append((from_sq, to_sq, 0))
-                break
-            moves.append((from_sq, to_sq, 0))
-            r += dr
-            f += df
-    
-    return moves
-
-def generate_bishop_moves(board, from_sq, color):
-    return generate_sliding_moves(board, from_sq, color, [(-1,-1),(-1,1),(1,-1),(1,1)])
-
-def generate_rook_moves(board, from_sq, color):
-    return generate_sliding_moves(board, from_sq, color, [(-1,0),(1,0),(0,-1),(0,1)])
-
-def generate_queen_moves(board, from_sq, color):
-    return generate_sliding_moves(board, from_sq, color, 
-        [(-1,-1),(-1,1),(1,-1),(1,1),(-1,0),(1,0),(0,-1),(0,1)])
-
-def generate_king_moves(board, from_sq, color):
-    """Generate king moves"""
-    moves = []
-    rank = rank_of(from_sq)
-    file = file_of(from_sq)
-    
-    king_moves = [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
-    
-    for dr, df in king_moves:
-        nr, nf = rank + dr, file + df
-        if 0 <= nr < 8 and 0 <= nf < 8:
-            to_sq = nr * 8 + nf
-            piece = board.board[to_sq]
-            if not piece or piece_color(piece) != color:
-                moves.append((from_sq, to_sq, 0))
-    
-    return moves
-
-def filter_legal_moves(board, moves):
-    """Filter moves to only legal moves"""
-    legal_moves = []
-    for move in moves:
-        board_clone = board.clone()
-        board_clone.make_move(move)
-        if not board_clone.is_check(board.side_to_move):
-            legal_moves.append(move)
-    return legal_moves
+    rank
