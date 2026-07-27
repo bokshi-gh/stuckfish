@@ -7,7 +7,6 @@ import sys
 import time
 from .board import Board
 from .search import Search
-from .perft import Perft
 from .constants import square_name, QUEEN, ROOK, BISHOP, KNIGHT
 
 class UCI:
@@ -15,7 +14,6 @@ class UCI:
         self.board = Board()
         self.search = Search(self.board)
         self.is_running = True
-        self.perft = Perft(self.board)
     
     def run(self):
         """Main UCI loop"""
@@ -47,7 +45,6 @@ class UCI:
             elif command == "ucinewgame":
                 self.board = Board()
                 self.search = Search(self.board)
-                self.perft = Perft(self.board)
             
             elif command == "position":
                 self.handle_position(parts[1:])
@@ -57,9 +54,6 @@ class UCI:
             
             elif command == "d":
                 print(self.board)
-            
-            elif command == "perft":
-                self.handle_perft(parts[1:])
             
             elif command == "stop":
                 pass
@@ -132,21 +126,6 @@ class UCI:
             print(f"bestmove {self.move_to_string(best_move)}")
         else:
             print("bestmove (none)")
-    
-    def handle_perft(self, args):
-        """Handle 'perft' command for testing"""
-        if not args:
-            print("Usage: perft <depth>")
-            return
-        
-        try:
-            depth = int(args[0])
-            self.perft.board = self.board
-            total = self.perft.run_perft(depth)
-            stats = self.search.tt.get_stats()
-            print(f"\nTransposition table stats: {stats}")
-        except ValueError:
-            print("Invalid depth")
     
     def parse_square(self, sq_str):
         if len(sq_str) != 2:
