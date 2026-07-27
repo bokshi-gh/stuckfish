@@ -5,12 +5,10 @@ A UCI-compliant chess engine written in Python.
 ## Quick Start
 
 ```bash
-git clone [https://github.com/bokshi-gh/stuckfish.git](https://github.com/bokshi-gh/stuckfish.git)
+git clone https://github.com/bokshi-gh/stuckfish.git
 cd stuckfish
 python main.py
 ```
-
-That's it! No installation, no dependencies needed.
 
 ## Features
 
@@ -92,22 +90,6 @@ Distributed under the MIT License. See [`LICENSE`](./LICENSE) for more informati
 
 - GitHub: [bokshi-gh](https://github.com/bokshi-gh)
 - Email: devrajeshthapa@gmail.com
-
----
-
-**Stuckfish** - Because even stuck fish can swim!
-```
-
-## How to Run
-
-1. Create all the files in the structure shown above
-2. Make sure `main.py` is in the root directory
-3. Run:
-```bash
-python main.py
-```
-
-The engine will start in UCI mode and wait for commands. You can type UCI commands directly or connect it to a chess GUI.
 
 ## Testing with a Chess GUI
 
