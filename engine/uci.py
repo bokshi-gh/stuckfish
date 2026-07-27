@@ -7,6 +7,7 @@ import sys
 import time
 from .board import Board
 from .search import Search
+from .perft import Perft
 from .constants import square_name, QUEEN, ROOK, BISHOP, KNIGHT
 
 class UCI:
@@ -14,11 +15,14 @@ class UCI:
         self.board = Board()
         self.search = Search(self.board)
         self.is_running = True
+        self.perft = Perft(self.board)
     
     def run(self):
         """Main UCI loop"""
         print("id name Stuckfish")
         print("id author Rajesh Thapa (bokshi)")
+        print("option name Hash type spin default 64 min 1 max 1024")
+        print("option name Ponder type check default false")
         print("uciok")
         
         while self.is_running:
@@ -43,6 +47,7 @@ class UCI:
             elif command == "ucinewgame":
                 self.board = Board()
                 self.search = Search(self.board)
+                self.perft = Perft(self.board)
             
             elif command == "position":
                 self.handle_position(parts[1:])
@@ -52,6 +57,9 @@ class UCI:
             
             elif command == "d":
                 print(self.board)
+            
+            elif command == "perft":
+                self.handle_perft(parts[1:])
             
             elif command == "stop":
                 pass
@@ -78,6 +86,7 @@ class UCI:
     def handle_go(self, args):
         """Handle 'go' command"""
         depth = 4
+        movetime = 0
         wtime = btime = winc = binc = 0
         
         for i in range(0, len(args), 2):
@@ -93,22 +102,27 @@ class UCI:
                 winc = int(args[i + 1])
             elif args[i] == "binc":
                 binc = int(args[i + 1])
+            elif args[i] == "movetime":
+                movetime = int(args[i + 1])
         
         # Time limit
-        time_limit = 5.0
-        if self.board.side_to_move == 0:
-            if wtime > 0:
-                time_limit = wtime / 1000 / 40
-                if winc > 0:
-                    time_limit += winc / 1000
+        if movetime > 0:
+            time_limit = movetime / 1000
         else:
-            if btime > 0:
-                time_limit = btime / 1000 / 40
-                if binc > 0:
-                    time_limit += binc / 1000
+            time_limit = 5.0
+            if self.board.side_to_move == 0:
+                if wtime > 0:
+                    time_limit = wtime / 1000 / 40
+                    if winc > 0:
+                        time_limit += winc / 1000
+            else:
+                if btime > 0:
+                    time_limit = btime / 1000 / 40
+                    if binc > 0:
+                        time_limit += binc / 1000
         
-        depth = min(depth, 10)
-        time_limit = max(0.1, min(time_limit, 60))
+        depth = min(depth, 20)
+        time_limit = max(0.1, min(time_limit, 300))
         
         start_time = time.time()
         best_move, _ = self.search.search(depth, time_limit)
@@ -118,6 +132,21 @@ class UCI:
             print(f"bestmove {self.move_to_string(best_move)}")
         else:
             print("bestmove (none)")
+    
+    def handle_perft(self, args):
+        """Handle 'perft' command for testing"""
+        if not args:
+            print("Usage: perft <depth>")
+            return
+        
+        try:
+            depth = int(args[0])
+            self.perft.board = self.board
+            total = self.perft.run_perft(depth)
+            stats = self.search.tt.get_stats()
+            print(f"\nTransposition table stats: {stats}")
+        except ValueError:
+            print("Invalid depth")
     
     def parse_square(self, sq_str):
         if len(sq_str) != 2:
