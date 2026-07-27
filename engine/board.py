@@ -1,5 +1,5 @@
 """
-Chess board representation
+Chess board representation with full attack detection
 Author: Rajesh Thapa (bokshi)
 """
 
@@ -17,6 +17,7 @@ class Board:
         self.halfmove_clock = 0
         self.fullmove_number = 1
         self.hash = 0
+        self.king_square = [E1, E8]  # White king, Black king
         
         if fen:
             self.set_fen(fen)
@@ -58,6 +59,7 @@ class Board:
         self.en_passant = -1
         self.halfmove_clock = 0
         self.fullmove_number = 1
+        self.king_square = [E1, E8]
     
     def _set_piece(self, sq, piece):
         """Set a piece on the board"""
@@ -70,6 +72,8 @@ class Board:
             bit = 1 << sq
             self.color_bitboards[color] |= bit
             self.piece_bitboards[ptype] |= bit
+            if ptype == KING:
+                self.king_square[color] = sq
     
     def _clear_piece(self, sq):
         """Clear a piece from the board"""
@@ -81,6 +85,8 @@ class Board:
             self.color_bitboards[color] &= ~bit
             self.piece_bitboards[ptype] &= ~bit
             self.board[sq] = 0
+            if ptype == KING:
+                self.king_square[color] = -1
     
     def get_piece(self, sq):
         return self.board[sq]
@@ -88,6 +94,79 @@ class Board:
     def get_occupancy(self):
         """Get bitboard of all occupied squares"""
         return self.color_bitboards[WHITE] | self.color_bitboards[BLACK]
+    
+    def is_square_attacked(self, sq, by_color):
+        """Check if a square is attacked by the given color"""
+        # Pawn attacks
+        pawn_dirs = [7, 9] if by_color == WHITE else [-7, -9]
+        for offset in pawn_dirs:
+            attacker_sq = sq + offset
+            if 0 <= attacker_sq < 64:
+                # Ensure pawns don't wrap around
+                if abs(file_of(sq) - file_of(attacker_sq)) <= 1:
+                    piece = self.board[attacker_sq]
+                    if piece and piece_type(piece) == PAWN and piece_color(piece) == by_color:
+                        return True
+        
+        # Knight attacks
+        knight_offsets = [-17, -15, -10, -6, 6, 10, 15, 17]
+        for offset in knight_offsets:
+            attacker_sq = sq + offset
+            if 0 <= attacker_sq < 64:
+                if abs(file_of(sq) - file_of(attacker_sq)) <= 2:
+                    piece = self.board[attacker_sq]
+                    if piece and piece_type(piece) == KNIGHT and piece_color(piece) == by_color:
+                        return True
+        
+        # Bishop/Queen attacks (diagonal)
+        bishop_dirs = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+        for dr, df in bishop_dirs:
+            r, f = rank_of(sq) + dr, file_of(sq) + df
+            while 0 <= r < 8 and 0 <= f < 8:
+                attacker_sq = r * 8 + f
+                piece = self.board[attacker_sq]
+                if piece:
+                    ptype = piece_type(piece)
+                    if piece_color(piece) == by_color and (ptype == BISHOP or ptype == QUEEN):
+                        return True
+                    break
+                r += dr
+                f += df
+        
+        # Rook/Queen attacks (straight)
+        rook_dirs = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        for dr, df in rook_dirs:
+            r, f = rank_of(sq) + dr, file_of(sq) + df
+            while 0 <= r < 8 and 0 <= f < 8:
+                attacker_sq = r * 8 + f
+                piece = self.board[attacker_sq]
+                if piece:
+                    ptype = piece_type(piece)
+                    if piece_color(piece) == by_color and (ptype == ROOK or ptype == QUEEN):
+                        return True
+                    break
+                r += dr
+                f += df
+        
+        # King attacks
+        king_offsets = [-9, -8, -7, -1, 1, 7, 8, 9]
+        for offset in king_offsets:
+            attacker_sq = sq + offset
+            if 0 <= attacker_sq < 64:
+                if abs(file_of(sq) - file_of(attacker_sq)) <= 1:
+                    piece = self.board[attacker_sq]
+                    if piece and piece_type(piece) == KING and piece_color(piece) == by_color:
+                        return True
+        
+        return False
+    
+    def is_check(self, color):
+        """Check if the given color is in check"""
+        king_sq = self.king_square[color]
+        if king_sq == -1:
+            return False
+        enemy = 1 - color
+        return self.is_square_attacked(king_sq, enemy)
     
     def make_move(self, move):
         """Make a move on the board"""
@@ -97,13 +176,19 @@ class Board:
         if not piece:
             return False
         
-        # Remove piece from current square
-        self._clear_piece(from_sq)
+        # Save state for undo
+        captured = self.board[to_sq]
+        castling = False
+        ep_capture = False
         
         # Handle en passant capture
         if self.en_passant != -1 and to_sq == self.en_passant:
+            ep_capture = True
             captured_sq = to_sq - 8 if self.side_to_move == WHITE else to_sq + 8
             self._clear_piece(captured_sq)
+        
+        # Remove piece from current square
+        self._clear_piece(from_sq)
         
         # Handle promotion
         if promotion:
@@ -116,21 +201,32 @@ class Board:
             if from_sq == E1 and to_sq == G1:
                 self._set_piece(F1, make_piece(WHITE, ROOK))
                 self._clear_piece(H1)
+                castling = True
             elif from_sq == E1 and to_sq == C1:
                 self._set_piece(D1, make_piece(WHITE, ROOK))
                 self._clear_piece(A1)
+                castling = True
             elif from_sq == E8 and to_sq == G8:
                 self._set_piece(F8, make_piece(BLACK, ROOK))
                 self._clear_piece(H8)
+                castling = True
             elif from_sq == E8 and to_sq == C8:
                 self._set_piece(D8, make_piece(BLACK, ROOK))
                 self._clear_piece(A8)
+                castling = True
+            
+            # Update king square
+            self.king_square[self.side_to_move] = to_sq
+        
+        # Update en passant
+        self.en_passant = -1
+        
+        # Double pawn push
+        if piece_type(piece) == PAWN and abs(to_sq - from_sq) == 16:
+            self.en_passant = (from_sq + to_sq) // 2
         
         # Switch side to move
         self.side_to_move = 1 - self.side_to_move
-        
-        # Reset en passant
-        self.en_passant = -1
         
         # Update fullmove number
         if self.side_to_move == WHITE:
@@ -148,6 +244,7 @@ class Board:
         self.board = [0] * 64
         self.color_bitboards = [0, 0]
         self.piece_bitboards = [0] * 7
+        self.king_square = [-1, -1]
         
         # Parse piece placement
         ranks = parts[0].split('/')
@@ -255,21 +352,6 @@ class Board:
         result.append("  +-----------------+\n")
         result.append("    a b c d e f g h\n")
         return ''.join(result)
-    
-    def is_check(self, color):
-        """Check if the given color is in check"""
-        # Find king
-        king_bb = self.piece_bitboards[KING] & self.color_bitboards[color]
-        if not king_bb:
-            return False
-        king_sq = bit_scan_forward(king_bb)
-        # Simplified - would need full attack detection
-        return False
-    
-    def is_square_attacked(self, sq, by_color):
-        """Check if a square is attacked by the given color"""
-        # Simplified version
-        return False
     
     def clone(self):
         """Create a deep copy of the board"""
