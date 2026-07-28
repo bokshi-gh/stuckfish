@@ -46,7 +46,6 @@ python main.py
 |--------|-------|
 | Nodes per second | 10,000 - 50,000 |
 | Typical search depth | 6-8 plies |
-| Speed improvement | 10-20x faster than basic implementation |
 | Transposition table hit rate | 40-70% |
 
 ## Project Structure
