@@ -76,7 +76,17 @@ stuckfish/
 python main.py
 ```
 
-The engine will start in UCI mode and wait for commands from a chess GUI.
+This starts the engine in UCI mode. It reads commands from standard input (stdin) and outputs responses to standard output (stdout). For normal use, connect it to a UCI-compatible chess GUI.
+
+You can also type UCI commands directly for testing:
+
+```
+uci
+isready
+position startpos
+go depth 6
+quit
+```
 
 ### Building a Standalone Executable with PyInstaller
 
@@ -195,65 +205,6 @@ Narrow the search window for faster pruning.
 Efficiently search the most promising line first.
 - Speed boost: 1.5x
 
-## Development
-
-### Adding Features
-
-The engine is modular and easy to extend:
-
-1. New Evaluation Terms: Add to `evaluation.py`
-2. New Search Optimizations: Add to `search.py`
-3. New UCI Commands: Add to `uci.py`
-
-### Testing Changes
-
-To test your changes:
-
-```bash
-# Run the engine
-python main.py
-
-# Test specific positions
-python -c "from engine.board import Board; board = Board(); print(board)"
-```
-
-## Performance Comparison
-
-| Feature | Speed Increase | Depth Gain |
-|---------|---------------|------------|
-| Transposition Table | 2-4x | +1-2 plies |
-| Move Ordering | 2-3x | +1-2 plies |
-| Null Move Pruning | 1.3x | +0.5 plies |
-| Aspiration Windows | 1.2x | +0.5 plies |
-| PVS | 1.5x | +1 ply |
-| Total | 10-20x | +3-5 plies |
-
-## Troubleshooting
-
-### Engine doesn't start
-- Make sure Python 3.6+ is installed
-- Check if all files are in the correct structure
-- Try running `python main.py` from command line to see errors
-
-### PyInstaller build fails
-- Make sure PyInstaller is installed: `pip install pyinstaller`
-- Check for missing imports: `pyinstaller --onefile --name stuckfish --hidden-import=engine main.py`
-- Make sure you're in the project root directory
-
-### Executable doesn't work in GUI
-- Make sure the executable has proper permissions
-- For Windows, try running from command line to see errors
-- The executable automatically handles PyInstaller paths, no additional flags needed
-
-### ModuleNotFoundError with executable
-- This is fixed in the latest version - the executable properly handles sys._MEIPASS
-- Make sure you're using the corrected main.py from the repository
-
-### Slow performance
-- The engine runs at 10,000-50,000 nodes/second
-- Depth 6-8 is typical for 1-5 second searches
-- For better performance, consider using PyPy or compiling with Cython
-
 ## Future Improvements
 
 - [ ] Zobrist Hashing for faster transposition table lookups
@@ -264,16 +215,6 @@ python -c "from engine.board import Board; board = Board(); print(board)"
 - [ ] Principal Variation collection
 - [ ] Better evaluation (king safety, pawn structure)
 - [ ] Lazy SMP
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ## License
 
