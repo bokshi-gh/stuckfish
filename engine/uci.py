@@ -5,22 +5,37 @@ Author: Rajesh Thapa (bokshi)
 
 import sys
 import time
+import functools
 from .board import Board
 from .search import Search
-from .constants import square_name, QUEEN, ROOK, BISHOP, KNIGHT
+from .constants import (
+    square_name, QUEEN, ROOK, BISHOP, KNIGHT,
+    ENGINE_NAME, ENGINE_VERSION, ENGINE_AUTHOR, UCI_OPTIONS
+)
+
+# Force all prints to flush immediately for UCI protocol communication
+print = functools.partial(print, flush=True)
 
 class UCI:
     def __init__(self):
         self.board = Board()
         self.search = Search(self.board)
         self.is_running = True
+        self.hash_size = UCI_OPTIONS["Hash"]["default"]
+        self.ponder = UCI_OPTIONS["Ponder"]["default"]
     
     def run(self):
         """Main UCI loop"""
-        print("id name Stuckfish")
-        print("id author Rajesh Thapa (bokshi)")
-        print("option name Hash type spin default 64 min 1 max 1024")
-        print("option name Ponder type check default false")
+        print(f"id name {ENGINE_NAME}")
+        print(f"id author {ENGINE_AUTHOR}")
+        
+        # Print UCI options
+        for name, options in UCI_OPTIONS.items():
+            if options["type"] == "spin":
+                print(f"option name {name} type {options['type']} default {options['default']} min {options['min']} max {options['max']}")
+            elif options["type"] == "check":
+                print(f"option name {name} type {options['type']} default {'true' if options['default'] else 'false'}")
+        
         print("uciok")
         
         while self.is_running:
@@ -35,8 +50,8 @@ class UCI:
                 self.is_running = False
             
             elif command == "uci":
-                print("id name Stuckfish")
-                print("id author Rajesh Thapa (bokshi)")
+                print(f"id name {ENGINE_NAME}")
+                print(f"id author {ENGINE_AUTHOR}")
                 print("uciok")
             
             elif command == "isready":
@@ -45,6 +60,9 @@ class UCI:
             elif command == "ucinewgame":
                 self.board = Board()
                 self.search = Search(self.board)
+            
+            elif command == "setoption":
+                self.handle_setoption(parts[1:])
             
             elif command == "position":
                 self.handle_position(parts[1:])
@@ -57,6 +75,25 @@ class UCI:
             
             elif command == "stop":
                 pass
+    
+    def handle_setoption(self, args):
+        """Handle 'setoption' command"""
+        # Example: setoption name Hash value 128
+        if len(args) < 4:
+            return
+        
+        option_name = args[1]
+        if args[2] == "value":
+            option_value = args[3]
+            
+            if option_name == "Hash":
+                try:
+                    self.hash_size = int(option_value)
+                    self.search.tt.size = self.hash_size * 1024 * 1024
+                except ValueError:
+                    pass
+            elif option_name == "Ponder":
+                self.ponder = option_value.lower() in ["true", "1", "yes", "on"]
     
     def handle_position(self, args):
         """Handle 'position' command"""
