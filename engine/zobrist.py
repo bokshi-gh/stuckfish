@@ -3,6 +3,7 @@ Zobrist hashing for transposition table
 """
 
 import random
+from .constants import BLACK, WHITE, piece_color, piece_type
 
 class Zobrist:
     def __init__(self):
