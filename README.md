@@ -1,6 +1,6 @@
 # Stuckfish Chess Engine
 
-A UCI-compliant chess engine written in Python with advanced search optimizations.
+A UCI-compliant chess engine written in Python with advanced search optimizations and modern chess engine features.
 
 [![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -35,9 +35,20 @@ python main.py
 - Principal Variation Search - Efficient search ordering
 - Quiescence Search - Avoid horizon effect with selective capture search
 
+### Modern Chess Engine Features
+- **Zobrist Hashing** - Fast transposition table lookups
+- **Opening Book Support** - Pre-computed opening moves for better early game
+- **Syzygy Tablebase Support** - Perfect endgame play (requires external files)
+- **Lazy SMP** - Parallel search with multiple threads
+- **UCI Options** - Hash size, Threads, Ponder, OwnBook
+- **Principal Variation Collection** - Show best line of play
+- **Better Evaluation** - King safety, pawn structure analysis
+
 ### Position Evaluation
 - Material values with piece-square tables
 - Positional evaluation for all pieces
+- King safety and pawn structure
+- Endgame and middlegame king tables
 - Mirror tables for black pieces
 
 ## Performance
@@ -61,6 +72,9 @@ stuckfish/
 │   ├── evaluation.py         # Material & positional evaluation
 │   ├── uci.py                # UCI protocol implementation
 │   ├── transposition.py      # Transposition table
+│   ├── zobrist.py            # Zobrist hashing
+│   ├── opening.py            # Opening book support
+│   ├── endgame.py            # Syzygy tablebase support
 │   ├── bitboard.py           # Bitboard utilities
 │   └── constants.py          # Game constants
 ├── LICENSE
@@ -115,11 +129,6 @@ dist\stuckfish.exe
 ./dist/stuckfish
 ```
 
-The executable automatically handles:
-- Standard Python execution
-- PyInstaller --onedir builds
-- PyInstaller --onefile builds (using sys._MEIPASS for extraction path)
-
 ### Using the Executable in a Chess GUI
 
 1. Open your UCI-compatible chess GUI (Arena, Cute Chess, Fritz, etc.)
@@ -156,6 +165,15 @@ best_move, score = search.search(depth=6, time_limit=5.0)
 print(f"Best move: {best_move}, Score: {score}")
 ```
 
+## UCI Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| Hash | spin | 64 | Transposition table size in MB |
+| Threads | spin | 1 | Number of threads for Lazy SMP |
+| Ponder | check | false | Enable pondering |
+| OwnBook | check | false | Use opening book |
+
 ## UCI Commands
 
 | Command | Description |
@@ -163,6 +181,7 @@ print(f"Best move: {best_move}, Score: {score}")
 | `uci` | Identify the engine |
 | `isready` | Check if engine is ready |
 | `ucinewgame` | Reset engine for new game |
+| `setoption` | Set UCI options |
 | `position` | Set up a position (startpos or FEN) |
 | `go` | Start search with parameters |
 | `stop` | Stop the current search |
@@ -176,44 +195,83 @@ position startpos
 go depth 6
 info depth 1 score 50 nodes 20
 info depth 2 score 25 nodes 400
+info pv e2e4
 ...
 bestmove e2e4
 ```
 
+## Opening Book
+
+The engine supports opening books in JSON format:
+
+```json
+{
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1": {
+        "e2e4": 100,
+        "d2d4": 90,
+        "g1f3": 80,
+        "c2c4": 70
+    }
+}
+```
+
+To use your own opening book:
+1. Create a JSON file with positions and moves
+2. Place it in the engine directory
+3. Enable OwnBook option in UCI
+
+## Endgame Tablebases
+
+The engine supports Syzygy tablebases for perfect endgame play:
+
+1. Download Syzygy tablebases from: http://tablebase.sesse.net/
+2. Place them in a directory
+3. The engine will automatically detect and use them
+
 ## Search Optimizations Explained
 
-### 1. Transposition Table
-Caches previously evaluated positions to avoid redundant work.
+### 1. Zobrist Hashing
+Fast position hashing for transposition table lookups.
 - Speed boost: 2-4x
 - Hit rate: 40-70%
 
-### 2. Move Ordering
+### 2. Lazy SMP
+Parallel search across multiple threads.
+- Speed boost: ~2x per thread (diminishing returns)
+- Scales up to 8 threads effectively
+
+### 3. Transposition Table
+Caches previously evaluated positions.
+- Speed boost: 2-4x
+- Uses Zobrist hashing for fast lookups
+
+### 4. Move Ordering
 - MVV-LVA: Captures first (most valuable victim, least valuable attacker)
 - Killer Moves: Remember good moves in similar positions
 - History Heuristic: Track move success across positions
 
-### 3. Null Move Pruning
+### 5. Null Move Pruning
 Skip searching a position if it's clearly bad.
 - Speed boost: 1.3x
 
-### 4. Aspiration Windows
+### 6. Aspiration Windows
 Narrow the search window for faster pruning.
 - Speed boost: 1.2x
 
-### 5. Principal Variation Search
+### 7. Principal Variation Search
 Efficiently search the most promising line first.
 - Speed boost: 1.5x
 
 ## Future Improvements
 
-- [ ] Zobrist Hashing for faster transposition table lookups
-- [ ] Opening Book support
-- [ ] Endgame Tablebases (Syzygy support)
-- [ ] Multithreading for parallel search
-- [ ] UCI Options (Hash size, Threads)
-- [ ] Principal Variation collection
-- [ ] Better evaluation (king safety, pawn structure)
-- [ ] Lazy SMP
+- [ ] Neural network evaluation (NNUE)
+- [ ] Multi-variant search
+- [ ] More opening books
+- [ ] Online database support
+- [ ] GUI interface
+- [ ] Game analysis features
+- [ ] Chess960 support
+- [ ] Time management improvements
 
 ## License
 
@@ -229,3 +287,4 @@ Distributed under the MIT License. See LICENSE file for more information.
 - Inspired by Stockfish, the world's strongest chess engine
 - Built using concepts from the Chess Programming Wiki
 - UCI protocol documentation from wbec-ridderkerk.nl
+- Syzygy tablebases by Ronald de Man
