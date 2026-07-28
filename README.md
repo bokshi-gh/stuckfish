@@ -2,8 +2,6 @@
 
 A UCI-compliant chess engine written in Python with advanced search optimizations.
 
-**Author:** Rajesh Thapa (bokshi)
-
 [![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![UCI](https://img.shields.io/badge/UCI-Compliant-orange.svg)](http://wbec-ridderkerk.nl/html/UCIProtocol.html)
@@ -15,8 +13,6 @@ git clone https://github.com/bokshi-gh/stuckfish.git
 cd stuckfish
 python main.py
 ```
-
-That's it! No installation, no dependencies needed.
 
 ## Features
 
@@ -104,20 +100,16 @@ pyinstaller --onefile --name stuckfish main.py
 4. Run the executable:
 ```bash
 # Windows
-stuckfish.exe
+dist\stuckfish.exe
 
 # Linux/macOS
-./stuckfish
+./dist/stuckfish
 ```
 
-5. For UCI mode with unbuffered output (recommended for GUIs):
-```bash
-# Windows
-stuckfish.exe -u
-
-# Linux/macOS
-./stuckfish -u
-```
+The executable automatically handles:
+- Standard Python execution
+- PyInstaller --onedir builds
+- PyInstaller --onefile builds (using sys._MEIPASS for extraction path)
 
 ### Using the Executable in a Chess GUI
 
@@ -133,7 +125,7 @@ stuckfish.exe -u
 For a smaller executable with better performance:
 
 ```bash
-# Optimized build
+# Optimized build (recommended)
 pyinstaller --onefile --name stuckfish --noconsole --strip main.py
 
 # With debug output
@@ -213,6 +205,18 @@ The engine is modular and easy to extend:
 2. New Search Optimizations: Add to `search.py`
 3. New UCI Commands: Add to `uci.py`
 
+### Testing Changes
+
+To test your changes:
+
+```bash
+# Run the engine
+python main.py
+
+# Test specific positions
+python -c "from engine.board import Board; board = Board(); print(board)"
+```
+
 ## Performance Comparison
 
 | Feature | Speed Increase | Depth Gain |
@@ -234,11 +238,16 @@ The engine is modular and easy to extend:
 ### PyInstaller build fails
 - Make sure PyInstaller is installed: `pip install pyinstaller`
 - Check for missing imports: `pyinstaller --onefile --name stuckfish --hidden-import=engine main.py`
+- Make sure you're in the project root directory
 
 ### Executable doesn't work in GUI
 - Make sure the executable has proper permissions
 - For Windows, try running from command line to see errors
-- Use the `-u` flag for unbuffered output: `stuckfish.exe -u`
+- The executable automatically handles PyInstaller paths, no additional flags needed
+
+### ModuleNotFoundError with executable
+- This is fixed in the latest version - the executable properly handles sys._MEIPASS
+- Make sure you're using the corrected main.py from the repository
 
 ### Slow performance
 - The engine runs at 10,000-50,000 nodes/second
@@ -280,16 +289,3 @@ Distributed under the MIT License. See LICENSE file for more information.
 - Inspired by Stockfish, the world's strongest chess engine
 - Built using concepts from the Chess Programming Wiki
 - UCI protocol documentation from wbec-ridderkerk.nl
-
----
-
-**Stuckfish** - Because even stuck fish can swim!
-```
-
-The README now focuses on:
-1. Running directly with Python
-2. Building a standalone executable with PyInstaller
-3. Using the executable in chess GUIs
-4. No more GUI setup instructions with Python command and parameters
-
-The PyInstaller approach is cleaner because users just need to point their GUI to a single executable file.
