@@ -1,12 +1,14 @@
 """
-Transposition table for caching evaluated positions
-Author: Rajesh Thapa (bokshi)
+Transposition table with Zobrist hashing
 """
 
+from .zobrist import Zobrist
+
 class TranspositionTable:
-    def __init__(self, size=1000000):
+    def __init__(self, size=64):
+        self.size = size * 1024 * 1024  # Size in bytes
         self.table = {}
-        self.size = size
+        self.zobrist = Zobrist()
         self.hits = 0
         self.misses = 0
     
