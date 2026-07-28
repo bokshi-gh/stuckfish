@@ -3,6 +3,7 @@ Position evaluation with king safety and pawn structure
 """
 
 from .constants import *
+from .bitboard import file_of
 
 # Piece-square tables
 PAWN_TABLE = [
