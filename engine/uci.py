@@ -7,6 +7,7 @@ import time
 import functools
 from .board import Board
 from .search import Search
+from .transposition import TranspositionTable
 from .constants import (
     square_name, QUEEN, ROOK, BISHOP, KNIGHT,
     ENGINE_NAME, ENGINE_VERSION, ENGINE_AUTHOR, UCI_OPTIONS
