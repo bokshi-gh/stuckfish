@@ -3,6 +3,17 @@ Chess constants and piece definitions
 Author: Rajesh Thapa (bokshi)
 """
 
+# Engine Information
+ENGINE_NAME = "Stuckfish"
+ENGINE_VERSION = "2.0.0"
+ENGINE_AUTHOR = "Rajesh Thapa (bokshi)"
+
+# UCI Options
+UCI_OPTIONS = {
+    "Hash": {"type": "spin", "default": 64, "min": 1, "max": 1024},
+    "Ponder": {"type": "check", "default": False}
+}
+
 # Piece types
 PAWN = 1
 KNIGHT = 2
