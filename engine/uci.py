@@ -1,6 +1,5 @@
 """
 UCI (Universal Chess Interface) protocol implementation
-Author: Rajesh Thapa (bokshi)
 """
 
 import sys
@@ -22,11 +21,13 @@ class UCI:
         self.search = Search(self.board)
         self.is_running = True
         self.hash_size = UCI_OPTIONS["Hash"]["default"]
+        self.threads = UCI_OPTIONS["Threads"]["default"]
         self.ponder = UCI_OPTIONS["Ponder"]["default"]
+        self.own_book = UCI_OPTIONS["OwnBook"]["default"]
     
     def run(self):
         """Main UCI loop"""
-        print(f"id name {ENGINE_NAME}")
+        print(f"id name {ENGINE_NAME} {ENGINE_VERSION}")
         print(f"id author {ENGINE_AUTHOR}")
         
         # Print UCI options
@@ -50,7 +51,7 @@ class UCI:
                 self.is_running = False
             
             elif command == "uci":
-                print(f"id name {ENGINE_NAME}")
+                print(f"id name {ENGINE_NAME} {ENGINE_VERSION}")
                 print(f"id author {ENGINE_AUTHOR}")
                 print("uciok")
             
@@ -60,6 +61,8 @@ class UCI:
             elif command == "ucinewgame":
                 self.board = Board()
                 self.search = Search(self.board)
+                self.search.threads = self.threads
+                self.search.tt = TranspositionTable(self.hash_size)
             
             elif command == "setoption":
                 self.handle_setoption(parts[1:])
@@ -70,15 +73,14 @@ class UCI:
             elif command == "go":
                 self.handle_go(parts[1:])
             
+            elif command == "stop":
+                self.search.stop = True
+            
             elif command == "d":
                 print(self.board)
-            
-            elif command == "stop":
-                pass
     
     def handle_setoption(self, args):
         """Handle 'setoption' command"""
-        # Example: setoption name Hash value 128
         if len(args) < 4:
             return
         
@@ -89,11 +91,20 @@ class UCI:
             if option_name == "Hash":
                 try:
                     self.hash_size = int(option_value)
-                    self.search.tt.size = self.hash_size * 1024 * 1024
+                    self.search.tt = TranspositionTable(self.hash_size)
+                except ValueError:
+                    pass
+            elif option_name == "Threads":
+                try:
+                    self.threads = int(option_value)
+                    self.search.threads = self.threads
                 except ValueError:
                     pass
             elif option_name == "Ponder":
                 self.ponder = option_value.lower() in ["true", "1", "yes", "on"]
+            elif option_name == "OwnBook":
+                self.own_book = option_value.lower() in ["true", "1", "yes", "on"]
+                self.search.own_book = self.own_book
     
     def handle_position(self, args):
         """Handle 'position' command"""
@@ -119,6 +130,7 @@ class UCI:
         depth = 4
         movetime = 0
         wtime = btime = winc = binc = 0
+        infinite = False
         
         for i in range(0, len(args), 2):
             if i + 1 >= len(args):
@@ -135,9 +147,13 @@ class UCI:
                 binc = int(args[i + 1])
             elif args[i] == "movetime":
                 movetime = int(args[i + 1])
+            elif args[i] == "infinite":
+                infinite = True
         
         # Time limit
-        if movetime > 0:
+        if infinite:
+            time_limit = 300
+        elif movetime > 0:
             time_limit = movetime / 1000
         else:
             time_limit = 5.0
@@ -155,8 +171,11 @@ class UCI:
         depth = min(depth, 20)
         time_limit = max(0.1, min(time_limit, 300))
         
+        # Reset stop flag
+        self.search.stop = False
+        
         start_time = time.time()
-        best_move, _ = self.search.search(depth, time_limit)
+        best_move, score = self.search.search(depth, time_limit)
         elapsed = time.time() - start_time
         
         if best_move:
