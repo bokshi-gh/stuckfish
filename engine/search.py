@@ -9,7 +9,7 @@ from .evaluation import evaluate
 from .transposition import TranspositionTable
 from .opening import OpeningBook
 from .endgame import SyzygyTablebase
-from .constants import PIECE_VALUES, piece_type, ENGINE_VERSION
+from .constants import PIECE_VALUES, piece_type, ENGINE_VERSION, square_name, QUEEN, ROOK, BISHOP, KNIGHT
 
 class Search:
     def __init__(self, board):
@@ -100,7 +100,8 @@ class Search:
             
             if self.best_move:
                 pv_str = self.pv_to_string()
-                print(f"info pv {pv_str}")
+                if pv_str:
+                    print(f"info pv {pv_str}")
         
         return self.best_move, score
     
@@ -123,9 +124,6 @@ class Search:
         # Wait for first thread to finish with a result
         best_result = None
         best_score = -1000000
-        
-        for t in threads:
-            t.join(timeout=0.1)  # Check periodically
         
         # Wait for all threads to complete or time limit
         while time.time() - self.start_time < time_limit:
@@ -214,7 +212,7 @@ class Search:
         ordered_moves = order_moves(self.board, legal_moves, self.killer_moves, self.history, ply)
         
         # Principal variation search
-        best_move = ordered_moves[0]
+        best_move = ordered_moves[0] if ordered_moves else None
         best_score = -1000000
         
         for i, move in enumerate(ordered_moves):
@@ -259,7 +257,8 @@ class Search:
         elif best_score >= beta:
             flag = 'lower'
         
-        self.tt.store(key, depth, best_score, flag, best_move, ply)
+        if best_move:
+            self.tt.store(key, depth, best_score, flag, best_move, ply)
         
         return best_score
     
@@ -348,6 +347,3 @@ class Search:
     def parse_piece_type(self, char):
         """Parse promotion piece type"""
         return {'q': QUEEN, 'r': ROOK, 'b': BISHOP, 'n': KNIGHT}.get(char, 0)
-
-# Import needed constants
-from .constants import square_name, QUEEN, ROOK, BISHOP, KNIGHT
