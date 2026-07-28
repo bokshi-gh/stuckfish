@@ -3,7 +3,7 @@ Zobrist hashing for transposition table
 """
 
 import random
-from .constants import BLACK, WHITE, piece_color, piece_type
+from .constants import piece_color, piece_type
 
 class Zobrist:
     def __init__(self):
@@ -48,6 +48,3 @@ class Zobrist:
             hash_key ^= self.side_key
         
         return hash_key
-
-# Import needed constants
-from .constants import piece_color, piece_type
