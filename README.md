@@ -2,6 +2,8 @@
 
 A UCI-compliant chess engine written in Python with advanced search optimizations.
 
+**Author:** Rajesh Thapa (bokshi)
+
 [![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![UCI](https://img.shields.io/badge/UCI-Compliant-orange.svg)](http://wbec-ridderkerk.nl/html/UCIProtocol.html)
@@ -13,6 +15,8 @@ git clone https://github.com/bokshi-gh/stuckfish.git
 cd stuckfish
 python main.py
 ```
+
+That's it! No installation, no dependencies needed.
 
 ## Features
 
@@ -78,38 +82,63 @@ python main.py
 
 The engine will start in UCI mode and wait for commands from a chess GUI.
 
-### Setting Up in a Chess GUI
+### Building a Standalone Executable with PyInstaller
 
-To use Stuckfish in any UCI-compatible chess GUI (Arena, Cute Chess, Fritz, etc.):
+To distribute Stuckfish as a single executable file without requiring Python:
 
-1. Open your chess GUI
-2. Add a new engine
-3. Configure as follows:
-
-**Command:** `python` (or `python3` on Linux/Mac)  
-**Parameters:** `main.py`  
-**Working Directory:** Path to the stuckfish folder
-
-Example in Arena Chess GUI:
-- **Engine Name:** Stuckfish
-- **Command:** `python`
-- **Parameters:** `main.py`
-- **Working Directory:** `C:\Users\YourName\stuckfish`
-
-### Optional: Create a Launcher (Windows)
-
-For easier setup, you can create a `run.bat` file in the stuckfish folder:
-
-```batch
-@echo off
-python -u main.py
+1. Install PyInstaller:
+```bash
+pip install pyinstaller
 ```
 
-The `-u` flag enables unbuffered output for better UCI communication.
+2. Build the executable:
+```bash
+pyinstaller --onefile --name stuckfish main.py
+```
 
-Then in your GUI:
-- **Command:** `C:\path\to\stuckfish\run.bat`
-- **Parameters:** (leave empty)
+3. The executable will be created in the `dist` folder:
+   - Windows: `dist/stuckfish.exe`
+   - Linux: `dist/stuckfish`
+   - macOS: `dist/stuckfish`
+
+4. Run the executable:
+```bash
+# Windows
+stuckfish.exe
+
+# Linux/macOS
+./stuckfish
+```
+
+5. For UCI mode with unbuffered output (recommended for GUIs):
+```bash
+# Windows
+stuckfish.exe -u
+
+# Linux/macOS
+./stuckfish -u
+```
+
+### Using the Executable in a Chess GUI
+
+1. Open your UCI-compatible chess GUI (Arena, Cute Chess, Fritz, etc.)
+2. Add a new engine
+3. Point to the executable file:
+   - Windows: `C:\path\to\stuckfish.exe`
+   - Linux/macOS: `/path/to/stuckfish`
+4. No parameters needed (the executable runs in UCI mode by default)
+
+### PyInstaller Options
+
+For a smaller executable with better performance:
+
+```bash
+# Optimized build
+pyinstaller --onefile --name stuckfish --noconsole --strip main.py
+
+# With debug output
+pyinstaller --onefile --name stuckfish --debug main.py
+```
 
 ### Programmatic Usage
 
@@ -202,15 +231,19 @@ The engine is modular and easy to extend:
 - Check if all files are in the correct structure
 - Try running `python main.py` from command line to see errors
 
-### GUI doesn't detect engine
-- Make sure the command path is correct
-- Check if the working directory is set correctly
-- For Windows, try using the full path to Python: `C:\Python39\python.exe`
+### PyInstaller build fails
+- Make sure PyInstaller is installed: `pip install pyinstaller`
+- Check for missing imports: `pyinstaller --onefile --name stuckfish --hidden-import=engine main.py`
+
+### Executable doesn't work in GUI
+- Make sure the executable has proper permissions
+- For Windows, try running from command line to see errors
+- Use the `-u` flag for unbuffered output: `stuckfish.exe -u`
 
 ### Slow performance
 - The engine runs at 10,000-50,000 nodes/second
 - Depth 6-8 is typical for 1-5 second searches
-- For better performance, consider using PyPy instead of CPython
+- For better performance, consider using PyPy or compiling with Cython
 
 ## Future Improvements
 
@@ -247,3 +280,16 @@ Distributed under the MIT License. See LICENSE file for more information.
 - Inspired by Stockfish, the world's strongest chess engine
 - Built using concepts from the Chess Programming Wiki
 - UCI protocol documentation from wbec-ridderkerk.nl
+
+---
+
+**Stuckfish** - Because even stuck fish can swim!
+```
+
+The README now focuses on:
+1. Running directly with Python
+2. Building a standalone executable with PyInstaller
+3. Using the executable in chess GUIs
+4. No more GUI setup instructions with Python command and parameters
+
+The PyInstaller approach is cleaner because users just need to point their GUI to a single executable file.
