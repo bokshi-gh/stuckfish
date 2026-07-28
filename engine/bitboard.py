@@ -1,6 +1,5 @@
 """
 Bitboard utilities for efficient board representation
-Author: Rajesh Thapa (bokshi)
 """
 
 def bit_scan_forward(bb):
